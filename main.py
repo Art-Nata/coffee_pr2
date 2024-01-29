@@ -6,11 +6,13 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QWidget, QTableWidgetItem
 
 
+CON = sqlite3.connect('coffee.sqlite')
+
+
 class DBCoffee(QWidget):
     def __init__(self):
         super(DBCoffee, self).__init__()
         uic.loadUi('main.ui', self)
-        self.con = sqlite3.connect('coffee.sqlite')
         self.open_db()
         self.addButton.clicked.connect(self.add)
         self.editButton.clicked.connect(self.edit)
@@ -29,7 +31,7 @@ class DBCoffee(QWidget):
                     LEFT JOIN degree_of_roasting ON coffee_specifications.id_degree = degree_of_roasting.id
                     LEFT JOIN type_coffee ON coffee_specifications.id_type_coffee = type_coffee.id
                 """
-        rez = self.con.cursor().execute(query).fetchall()
+        rez = CON.cursor().execute(query).fetchall()
         self.tableWidget.setColumnCount(len(rez[0]))
         self.tableWidget.setRowCount(len(rez))
         self.tableWidget.setHorizontalHeaderLabels(["ID", 'Название', 'Степень обжарки', 'Молотый', 'Описание',
@@ -42,7 +44,7 @@ class DBCoffee(QWidget):
     def closeEvent(self, event):
         # При закрытии формы закроем и наше соединение
         # с базой данных
-        self.con.close()
+        CON.close()
 
     def add(self):
         wnd1.show()
@@ -52,12 +54,33 @@ class DBCoffee(QWidget):
 
 
 class AddEditForm(QWidget):
-    def __init__(self):
+    def __init__(self, con):
         super(AddEditForm, self).__init__()
         uic.loadUi('addEditCoffeeForm.ui', self)
         self.lineEdit_ID.setEnabled(False)
-        self.comboBox_type.clear()
-        self.comboBox_type.addItems(['молотый', 'в зёрнах'])
+        self.params = {}
+        self.params_type = {}
+        self.con1 = con
+        self.select_degree()
+        self.select_type()
+        self.okButton.clicked.connect(self.run)
+
+    def select_degree(self):
+        req = "SELECT * from degree_of_roasting"
+        cur1 = self.con1.cursor()
+        for value, key in cur1.execute(req).fetchall():
+            self.params[key] = value
+        self.comboBox.addItems(list(self.params.keys()))
+
+    def select_type(self):
+        req = "SELECT * from type_coffee"
+        cur1 = self.con1.cursor()
+        for value, key in cur1.execute(req).fetchall():
+            self.params_type[key] = value
+        self.comboBox_type.addItems(list(self.params_type.keys()))
+
+    def run(self):
+        pass
 
 
 
@@ -69,6 +92,6 @@ if __name__ == '__main__':
     sys.excepthook = except_hoock
     app = QApplication(sys.argv)
     wnd = DBCoffee()
-    wnd1 = AddEditForm()
+    wnd1 = AddEditForm(CON)
     wnd.show()
     sys.exit(app.exec())
