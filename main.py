@@ -2,9 +2,8 @@ import sqlite3
 import sys
 
 from PyQt5 import uic
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QAbstractItemView
 from PyQt5.QtWidgets import QWidget, QTableWidgetItem
-
 
 CON = sqlite3.connect('coffee.sqlite')
 
@@ -40,6 +39,8 @@ class DBCoffee(QWidget):
             for j, vol in enumerate(row1):
                 self.tableWidget.setItem(i, j, QTableWidgetItem(str(vol)))
         self.tableWidget.resizeColumnsToContents()
+        self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
+
 
     def closeEvent(self, event):
         # При закрытии формы закроем и наше соединение
@@ -80,7 +81,34 @@ class AddEditForm(QWidget):
         self.comboBox_type.addItems(list(self.params_type.keys()))
 
     def run(self):
-        pass
+        name = self.lineEdit_name.text()
+        degree = self.comboBox.currentText()
+        type_coffee = self.comboBox_type.currentText()
+        text = self.textEdit.toPlainText()
+        price = self.lineEdit_price.text()
+        volue_1 = self.lineEdit_volue.text()
+        for vol, key in self.params.items():
+            if vol == degree:
+                id_degree = key
+        for volue, key in self.params_type.items():
+            if volue == type_coffee:
+                id_type_coffee = key
+
+        req = f"INSERT INTO coffee_specifications(name, id_degree, id_type_coffee, description, " \
+              f"price, packing_volume) "\
+              f"VALUES ('{name}', '{id_degree}', '{id_type_coffee}', '{text}', '{price}', '{volue_1}')"
+
+        cur1 = self.con1.cursor()
+        cur1.execute(req)
+        self.con1.commit()
+
+        self.lineEdit_name.clear()
+        self.textEdit.clear()
+        self.lineEdit_price.clear()
+        self.lineEdit_volue.clear()
+
+        wnd1.close()
+
 
 
 
