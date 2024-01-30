@@ -32,6 +32,7 @@ class DBCoffee(QWidget):
                     FROM coffee_specifications
                     LEFT JOIN degree_of_roasting ON coffee_specifications.id_degree = degree_of_roasting.id
                     LEFT JOIN type_coffee ON coffee_specifications.id_type_coffee = type_coffee.id
+                    ORDER BY coffee_specifications.ID
                 """
         rez = CON.cursor().execute(query).fetchall()
         self.tableWidget.setColumnCount(len(rez[0]))
@@ -44,7 +45,6 @@ class DBCoffee(QWidget):
         self.tableWidget.resizeColumnsToContents()
         self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
-
     def closeEvent(self, event):
         # При закрытии формы закроем и наше соединение
         # с базой данных
@@ -52,9 +52,9 @@ class DBCoffee(QWidget):
 
     def list_str(self):
         global str_list
-
+        str_list = []
         for i in range(self.tableWidget.columnCount()):
-            item = self.tableWidget.item(self.tableWidget.currentColumn(), i)
+            item = self.tableWidget.item(self.tableWidget.currentRow(), i)
             l = item.text()
             str_list.append(l)
 
@@ -63,13 +63,14 @@ class DBCoffee(QWidget):
         is_edd = True
         self.wnd_add = AddEditForm()
         self.wnd_add.show()
+        self.open_db()
 
     def edit(self):
         global is_edd
         is_edd = False
         self.wnd_add = AddEditForm()
         self.wnd_add.show()
-
+        self.open_db()
 
 
 class AddEditForm(QWidget):
@@ -81,11 +82,7 @@ class AddEditForm(QWidget):
         self.params_type = {}
         self.con1 = CON
         self.open_wnd()
-        #self.select_degree()
-        #self.select_type()
-
         self.okButton.clicked.connect(self.run)
-
 
     def select_degree(self):
         req = "SELECT * from degree_of_roasting"
@@ -103,15 +100,14 @@ class AddEditForm(QWidget):
 
     def open_wnd(self):
         global str_list, is_edd
-        print(is_edd)
+        self.select_degree()
+        self.select_type()
+
         if not is_edd:
             if str_list:
                 id, name_in, degree_in, type_coffee_in, text_in, price_in, volue_1_in = str_list
-                print(id, name_in, degree_in, type_coffee_in, text_in, price_in, volue_1_in)
-
+                self.lineEdit_ID.setText(id)
                 self.lineEdit_name.setText(name_in)
-                #self.comboBox.currentText()
-                #self.comboBox_type.currentText()
                 self.textEdit.insertPlainText(text_in)
                 self.lineEdit_price.setText(price_in)
                 self.lineEdit_volue.setText(volue_1_in)
@@ -120,18 +116,16 @@ class AddEditForm(QWidget):
             self.textEdit.clear()
             self.lineEdit_price.clear()
             self.lineEdit_volue.clear()
-            self.select_degree()
-            self.select_type()
-
 
     def run(self):
+        global is_edd, str_list
 
         name = self.lineEdit_name.text()
         degree = self.comboBox.currentText()
         type_coffee = self.comboBox_type.currentText()
         text = self.textEdit.toPlainText()
         price = self.lineEdit_price.text()
-        volue_1 = self.lineEdit_volue.text()
+        volue_t = self.lineEdit_volue.text()
         for vol, key in self.params.items():
             if vol == degree:
                 id_degree = key
@@ -139,16 +133,22 @@ class AddEditForm(QWidget):
             if volue == type_coffee:
                 id_type_coffee = key
 
-        req = f"INSERT INTO coffee_specifications(name, id_degree, id_type_coffee, description, " \
-              f"price, packing_volume) "\
-              f"VALUES ('{name}', '{id_degree}', '{id_type_coffee}', '{text}', '{price}', '{volue_1}')"
+        if is_edd:
 
-        cur1 = self.con1.cursor()
-        cur1.execute(req)
+            req = f"INSERT INTO coffee_specifications(name, id_degree, id_type_coffee, description, " \
+                  f"price, packing_volume) " \
+                  f"VALUES ('{name}', '{id_degree}', '{id_type_coffee}', '{text}', '{price}', '{volue_t}')"
+        else:
+            id_curr = str_list[0]
+            req = f"UPDATE coffee_specifications " \
+                  f"SET name = '{name}', id_degree = '{id_degree}', id_type_coffee = '{id_type_coffee}', " \
+                  f"description = '{text}', price = '{price}', packing_volume = '{volue_t}'" \
+                  f"WHERE ID = '{id_curr}'"
+
+        cur = self.con1.cursor()
+        cur.execute(req)
         self.con1.commit()
-
-
-
+        self.close()
 
 
 def except_hoock(cls, exception, traceback):
