@@ -6,6 +6,8 @@ from PyQt5.QtWidgets import QApplication, QAbstractItemView
 from PyQt5.QtWidgets import QWidget, QTableWidgetItem
 
 CON = sqlite3.connect('coffee.sqlite')
+str_list = []
+is_edd: bool = True
 
 
 class DBCoffee(QWidget):
@@ -13,6 +15,7 @@ class DBCoffee(QWidget):
         super(DBCoffee, self).__init__()
         uic.loadUi('main.ui', self)
         self.open_db()
+        self.tableWidget.clicked.connect(self.list_str)
         self.addButton.clicked.connect(self.add)
         self.editButton.clicked.connect(self.edit)
 
@@ -47,24 +50,42 @@ class DBCoffee(QWidget):
         # с базой данных
         CON.close()
 
+    def list_str(self):
+        global str_list
+
+        for i in range(self.tableWidget.columnCount()):
+            item = self.tableWidget.item(self.tableWidget.currentColumn(), i)
+            l = item.text()
+            str_list.append(l)
+
     def add(self):
-        wnd1.show()
+        global is_edd
+        is_edd = True
+        self.wnd_add = AddEditForm()
+        self.wnd_add.show()
 
     def edit(self):
-        wnd1.show()
+        global is_edd
+        is_edd = False
+        self.wnd_add = AddEditForm()
+        self.wnd_add.show()
+
 
 
 class AddEditForm(QWidget):
-    def __init__(self, con):
+    def __init__(self):
         super(AddEditForm, self).__init__()
         uic.loadUi('addEditCoffeeForm.ui', self)
         self.lineEdit_ID.setEnabled(False)
         self.params = {}
         self.params_type = {}
-        self.con1 = con
-        self.select_degree()
-        self.select_type()
+        self.con1 = CON
+        self.open_wnd()
+        #self.select_degree()
+        #self.select_type()
+
         self.okButton.clicked.connect(self.run)
+
 
     def select_degree(self):
         req = "SELECT * from degree_of_roasting"
@@ -80,7 +101,31 @@ class AddEditForm(QWidget):
             self.params_type[key] = value
         self.comboBox_type.addItems(list(self.params_type.keys()))
 
+    def open_wnd(self):
+        global str_list, is_edd
+        print(is_edd)
+        if not is_edd:
+            if str_list:
+                id, name_in, degree_in, type_coffee_in, text_in, price_in, volue_1_in = str_list
+                print(id, name_in, degree_in, type_coffee_in, text_in, price_in, volue_1_in)
+
+                self.lineEdit_name.setText(name_in)
+                #self.comboBox.currentText()
+                #self.comboBox_type.currentText()
+                self.textEdit.insertPlainText(text_in)
+                self.lineEdit_price.setText(price_in)
+                self.lineEdit_volue.setText(volue_1_in)
+        else:
+            self.lineEdit_name.clear()
+            self.textEdit.clear()
+            self.lineEdit_price.clear()
+            self.lineEdit_volue.clear()
+            self.select_degree()
+            self.select_type()
+
+
     def run(self):
+
         name = self.lineEdit_name.text()
         degree = self.comboBox.currentText()
         type_coffee = self.comboBox_type.currentText()
@@ -102,12 +147,6 @@ class AddEditForm(QWidget):
         cur1.execute(req)
         self.con1.commit()
 
-        self.lineEdit_name.clear()
-        self.textEdit.clear()
-        self.lineEdit_price.clear()
-        self.lineEdit_volue.clear()
-
-        wnd1.close()
 
 
 
@@ -120,6 +159,5 @@ if __name__ == '__main__':
     sys.excepthook = except_hoock
     app = QApplication(sys.argv)
     wnd = DBCoffee()
-    wnd1 = AddEditForm(CON)
     wnd.show()
     sys.exit(app.exec())
