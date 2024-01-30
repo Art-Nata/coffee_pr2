@@ -20,7 +20,7 @@ class DBCoffee(QWidget):
         self.editButton.clicked.connect(self.edit)
 
     def open_db(self):
-
+        # отображение таблицы в окне
         query = """SELECT
                       coffee_specifications.ID,
                       coffee_specifications.name,
@@ -51,6 +51,7 @@ class DBCoffee(QWidget):
         CON.close()
 
     def list_str(self):
+        # получаем список из текущей строки
         global str_list
         str_list = []
         for i in range(self.tableWidget.columnCount()):
@@ -59,6 +60,7 @@ class DBCoffee(QWidget):
             str_list.append(l)
 
     def add(self):
+        # добавление новой строки
         global is_edd
         is_edd = True
         self.wnd_add = AddEditForm()
@@ -66,6 +68,7 @@ class DBCoffee(QWidget):
         self.open_db()
 
     def edit(self):
+        # редактирование выделенной строки
         global is_edd
         is_edd = False
         self.wnd_add = AddEditForm()
