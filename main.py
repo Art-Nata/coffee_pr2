@@ -1,19 +1,21 @@
 import sqlite3
 import sys
 
-from PyQt5 import uic
 from PyQt5.QtWidgets import QApplication, QAbstractItemView
 from PyQt5.QtWidgets import QWidget, QTableWidgetItem
 
-CON = sqlite3.connect('coffee.sqlite')
+from main_window import Ui_Form
+from addEditCoffeeForm import Ui_addCoffee
+
+CON = sqlite3.connect('data/coffee.sqlite')
 str_list = []
 is_edd: bool = True
 
 
-class DBCoffee(QWidget):
+class DBCoffee(QWidget, Ui_Form):
     def __init__(self):
         super(DBCoffee, self).__init__()
-        uic.loadUi('main.ui', self)
+        self.setupUi(self)
         self.open_db()
         self.tableWidget.clicked.connect(self.list_str)
         self.addButton.clicked.connect(self.add)
@@ -66,6 +68,7 @@ class DBCoffee(QWidget):
         self.wnd_add = AddEditForm()
         self.wnd_add.show()
         self.open_db()
+        self.update()
 
     def edit(self):
         # редактирование выделенной строки
@@ -74,12 +77,13 @@ class DBCoffee(QWidget):
         self.wnd_add = AddEditForm()
         self.wnd_add.show()
         self.open_db()
+        self.update()
 
 
-class AddEditForm(QWidget):
+class AddEditForm(QWidget, Ui_addCoffee):
     def __init__(self):
         super(AddEditForm, self).__init__()
-        uic.loadUi('addEditCoffeeForm.ui', self)
+        self.setupUi(self)
         self.lineEdit_ID.setEnabled(False)
         self.params = {}
         self.params_type = {}
