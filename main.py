@@ -67,8 +67,9 @@ class DBCoffee(QWidget, Ui_Form):
         is_edd = True
         self.wnd_add = AddEditForm()
         self.wnd_add.show()
-        self.open_db()
         self.update()
+        self.open_db()
+
 
     def edit(self):
         # редактирование выделенной строки
@@ -76,8 +77,9 @@ class DBCoffee(QWidget, Ui_Form):
         is_edd = False
         self.wnd_add = AddEditForm()
         self.wnd_add.show()
-        self.open_db()
         self.update()
+        self.open_db()
+
 
 
 class AddEditForm(QWidget, Ui_addCoffee):
